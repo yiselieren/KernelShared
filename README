@@ -1,0 +1,30 @@
+Kernel <-> userspace shared memory FIFO example
+
+This is an example of shared memory region  between kernel driver
+and userspace application. The region is divided to two sub-regions each of
+that sub-regions represent simple unidirectional FIFO, first is a kernel->user
+shared memory region while the second is a user->kernel region.
+
+When user application writes something to the user->kernel FIFO it
+should execute any write to the device represented by driver. It doesn't
+matter what it writes, the write used only as an indication that some
+new data is written to user->kernel FIFO and allow the kernel part to
+check the new data instead of polling the FIFO constantly.
+
+When kernel writes some data to the kernel->user FIFO it sets a
+ready read flag. The user space application may sleep on a read from
+the device represented by driver (usertest2 example) or just wait for
+ready read flag using select (usertest1 example). The read itself is a
+dummy read and it represents only the fact that the new data is arrived
+and user space application may check the corresponding FIFO in a right
+timing instead of polling it constantly.
+
+In this example we write the repeated sequence 0..255 as a data in a
+user->kernel FIFO periodically. Then we use write system call, kernel
+reads the data and ensure that the sequence is correct. OTOH the kernel
+writes same sequences periodically to the kernel->user FIFO and userspace
+application read the data and ensure that the sequence is correct.
+
+Note that if FIFO read pointer is equal to FIFO write pointer the
+FIFO is considered empty. So actual FIFO capacity is one byte less than
+the region designated for the FIFO
